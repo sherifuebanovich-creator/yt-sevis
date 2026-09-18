@@ -1,0 +1,91 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            BigInt         @id
+  username      String?
+  balance       Decimal        @default(0)
+  lang          String         @default("uz")
+  createdAt     DateTime       @default(now())
+  transactions  Transaction[]
+  orders        ServiceOrder[]
+  boostOrders   BoostOrder[]
+  starPurchases StarPurchase[]
+  numberOrders  NumberOrder[]
+}
+
+model Transaction {
+  id              String   @id @default(cuid())
+  userId          BigInt
+  user            User     @relation(fields: [userId], references: [id])
+  provider        String // "payme" | "click" | "card"
+  amount          Decimal // сумма пополнения в суммах
+  status          String   @default("pending") // pending | success | failed | cancelled
+  providerTxId    String?
+  merchantTransId String   @unique
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model ServiceOrder {
+  id          String   @id @default(cuid())
+  userId      BigInt
+  user        User     @relation(fields: [userId], references: [id])
+  type        String // "create_channel" | "connect_monetization"
+  status      String   @default("new") // new | in_progress | done | rejected
+  channelUrl  String?
+  contactInfo String?
+  price       Decimal
+  createdAt   DateTime @default(now())
+}
+
+// Накрутка: подписчики / просмотры / лайки и т.п.
+model BoostOrder {
+  id            String   @id @default(cuid())
+  userId        BigInt
+  user          User     @relation(fields: [userId], references: [id])
+  service       String // "yt_subs" | "yt_views" | "yt_likes"
+  link          String
+  quantity      Int
+  pricePer1000  Decimal
+  totalCost     Decimal
+  status        String   @default("pending") // pending | processing | completed | failed
+  providerOrderId String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model StarPurchase {
+  id           String   @id @default(cuid())
+  userId       BigInt
+  user         User     @relation(fields: [userId], references: [id])
+  starsCount   Int
+  pricePerStar Decimal
+  totalCost    Decimal
+  status       String   @default("pending") // pending | delivered | failed
+  createdAt    DateTime @default(now())
+}
+
+model NumberOrder {
+  id         String   @id @default(cuid())
+  userId     BigInt
+  user       User     @relation(fields: [userId], references: [id])
+  country    String
+  quantity   Int
+  pricePerNum Decimal
+  totalCost  Decimal
+  status     String   @default("new")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Settings {
+  key   String @id
+  value String
+}

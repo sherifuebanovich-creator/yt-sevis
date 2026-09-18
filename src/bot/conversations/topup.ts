@@ -1,0 +1,67 @@
+import { InlineKeyboard } from "grammy";
+import type { MyContext, MyConversation } from "../types.js";
+import { prisma } from "../../db/prisma.js";
+import { getSetting, getSettingNumber } from "../../services/settings.js";
+import { makeT, resolveLang } from "../../i18n/index.js";
+import { notifyAdminPhoto } from "../../services/notifyAdmin.js";
+
+export async function topupConversation(conversation: MyConversation, ctx: MyContext) {
+  const lang = await conversation.external(() => resolveLang(ctx.from!.id));
+  const t = makeT(lang);
+  const minTopup = await conversation.external(() => getSettingNumber("min_topup"));
+
+  await ctx.reply(t("topup.amount", { min: minTopup }));
+
+  let amount = 0;
+  while (true) {
+    const msg = await conversation.waitFor("message:text");
+    const parsed = Number(msg.message.text.replace(/[^\d]/g, ""));
+    if (!parsed || parsed < minTopup) {
+      await ctx.reply(t("topup.invalid", { min: minTopup }));
+      continue;
+    }
+    amount = parsed;
+    break;
+  }
+
+  const userId = BigInt(ctx.from!.id);
+
+  // Сразу показываем карту (без выбора способа оплаты)
+  const [cardNumber, cardHolder, cardBank] = await conversation.external(() =>
+    Promise.all([getSetting("card_number"), getSetting("card_holder"), getSetting("card_bank")])
+  );
+
+  if (!cardNumber || !cardHolder) {
+    await ctx.reply(t("topup.cardNotConfigured"));
+    return;
+  }
+
+  await ctx.reply(
+    t("topup.cardDetails", { amount, cardNumber, cardHolder, cardBank: cardBank || "-" })
+  );
+
+  await ctx.reply(t("topup.awaitScreenshot"));
+  const photoMsg = await conversation.waitFor("message:photo");
+
+  const merchantTransId = `card_${userId}_${Date.now()}`;
+  const tx = await conversation.external(() =>
+    prisma.transaction.create({
+      data: { userId, provider: "card", amount, merchantTransId, status: "pending" },
+    })
+  );
+
+  // Бот сам пересылает скриншот во второй (админский) бот с кнопками и суммой
+  const kb = new InlineKeyboard().text("✅ Tasdiqlash", `pay_ok:${tx.id}`).text("❌ Rad etish", `pay_no:${tx.id}`);
+  const username = ctx.from?.username ? `@${ctx.from.username}` : String(userId);
+  const caption = [
+    "🧾 Yangi to'lov (karta)",
+    `💳 Summa: ${amount} so'm`,
+    `👤 Foydalanuvchi: ${username}`,
+    `🆔 ID: ${userId}`,
+  ].join("\n");
+
+  const photo = photoMsg.message.photo[photoMsg.message.photo.length - 1]!;
+  await notifyAdminPhoto(photo.file_id, caption, kb);
+
+  await ctx.reply(t("topup.screenshotDone"));
+}

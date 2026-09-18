@@ -1,0 +1,34 @@
+services:
+  - type: web
+    name: yt-services-bot
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npx prisma generate && npm run build
+    startCommand: npx prisma migrate deploy && npm start
+    healthCheckPath: /ping
+    autoDeploy: true
+    envVars:
+      - key: BOT_TOKEN
+        sync: false
+      - key: NOTIFY_BOT_TOKEN
+        sync: false
+      - key: NOTIFY_ADMIN_CHAT_ID
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: ADMIN_CHAT_ID
+        sync: false
+      - key: ADMIN_IDS
+        sync: false
+      - key: SERVER_PORT
+        sync: false
+      - key: PAYME_MERCHANT_ID
+        sync: false
+      - key: PAYME_KEY
+        sync: false
+      - key: CLICK_MERCHANT_ID
+        sync: false
+      - key: CLICK_SERVICE_ID
+        sync: false
+      - key: CLICK_SECRET_KEY
+        sync: false
