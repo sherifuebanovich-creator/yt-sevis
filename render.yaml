@@ -22,13 +22,13 @@ services:
         sync: false
       - key: SERVER_PORT
         sync: false
-      - key: PAYME_MERCHANT_ID
+      - key: SMM_API_URL
         sync: false
-      - key: PAYME_KEY
+      - key: SMM_API_KEY
         sync: false
-      - key: CLICK_MERCHANT_ID
+      - key: SMM_SERVICE_ID_YT_SUBS
         sync: false
-      - key: CLICK_SERVICE_ID
+      - key: SMM_SERVICE_ID_YT_VIEWS
         sync: false
-      - key: CLICK_SECRET_KEY
+      - key: SMM_SERVICE_ID_YT_LIKES
         sync: false

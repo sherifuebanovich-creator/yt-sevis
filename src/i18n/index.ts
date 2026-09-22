@@ -20,7 +20,7 @@ const ru: Record<string, string> = {
   "settings.history": "🧾 История пополнений",
   "settings.starrate": "⭐ Курс Stars",
   "settings.language": "🌐 Язык / Til",
-  "settings.topup": "💳 Пополнить баланс",
+  
 
   "balance.line": "Ваш баланс: {balance} сум",
   "history.empty": "Пополнений пока нет.",
@@ -31,9 +31,9 @@ const ru: Record<string, string> = {
 
   "start.welcome": "Добро пожаловать! Выберите действие:",
   "start.brief":
-    "Здесь вы можете купить услуги для YouTube:\n📺 канал • 🔗 монетизация • 🚀 накрутка • ⭐ Stars.\n\nПополняйте баланс (💳 карта, Payme, Click) и оформляйте заказы.",
+    "Здесь вы можете купить услуги для YouTube:\n📺 канал • 🔗 монетизация • 🚀 накрутка • ⭐ Stars.\n\nОформляйте заказы.",
   "start.tutorial":
-    "❓ Как пользоваться ботом\n\n1️⃣ Пополнение баланса\nНажмите «💳 Пополнить баланс» → введите сумму → оплатите картой (переведите сумму на карту и пришлите скриншот) или через Payme/Click. После подтверждения администратором баланс пополнится.\n\n2️⃣ Услуги\n• 📺 Создать YouTube-канал — заполните заявку, админ свяжется с вами.\n• 🔗 Подключить монетизацию — отправьте ссылку на канал.\n• 🚀 Накрутка — подписчики, просмотры, лайки.\n• ⭐ Купить Stars — звёзды для Telegram.\n\n3️⃣ Проверка заявок\n«⚙️ Настройки» → «📋 Мои заявки».\n\n4️⃣ Баланс и история\n«⚙️ Настройки» → «💰 Мой баланс» / «🧾 История».\n\n5️⃣ Смена языка\n«⚙️ Настройки» → «🌐 Язык» → Русский или O'zbek.\n\n💬 Вопросы? Свяжитесь с поддержкой.",
+    "❓ Как пользоваться ботом\n\n1️⃣ Пополнение баланса\nНажмите «💳 Пополнить баланс» → введите сумму → оплатите картой (переведите нужную сумму на карту и пришлите скриншот). После подтверждения администратором баланс пополнится.\n\n2️⃣ Услуги\n• 📺 Создать YouTube-канал — заполните заявку, админ свяжется с вами.\n• 🔗 Подключить монетизацию — отправьте ссылку на канал.\n• 🚀 Накрутка — подписчики, просмотры, лайки.\n• ⭐ Купить Stars — звёзды для Telegram.\n\n3️⃣ Проверка заявок\n«⚙️ Настройки» → «📋 Мои заявки».\n\n4️⃣ Баланс и история\n«⚙️ Настройки» → «💰 Мой баланс» / «🧾 История».\n\n5️⃣ Смена языка\n«⚙️ Настройки» → «🌐 Язык» → Русский или O'zbek.\n\n💬 Вопросы? Свяжитесь с поддержкой.",
 
   "lang.select": "Выберите язык / Tilni tanlang:",
   "lang.saved": "✅ Язык сохранён: Русский",
@@ -115,26 +115,25 @@ const ru: Record<string, string> = {
 
   "topup.amount": "Введите сумму пополнения в суммах (минимум {min} сум):",
   "topup.invalid": "Некорректная сумма. Введите число не меньше {min} сум:",
-  "topup.providerFirst": "Выберите способ оплаты:",
-  "topup.provider": "Сумма: {amount} сум. Выберите способ оплаты:",
-  "topup.unavailable": "💳 Оплата сейчас временно недоступна: администратор ещё не подключил платёжную систему (Payme/Click). Попробуйте позже — админ уже получил уведомление.",
-  "topup.payme": "Payme",
-  "topup.click": "Click",
-  "topup.visa": "Visa",
   "topup.card": "💳 Оплата картой",
   "topup.cardNotConfigured": "Оплата картой временно недоступна: администратор ещё не добавил реквизиты карты. Попробуйте позже.",
   "topup.cardDetails":
-    "Переведите {amount} сум на карту и отправьте скриншот подтверждения.\n\n💳 Карта: {cardNumber}\n👤 Получатель: {cardHolder}\n🏦 Банк: {cardBank}\n\n⚠️ Переводите сразу нужную сумму ({amount} сум) — именно она будет проверена администратором.",
+    "Переведите {amount} сум на эту карту и пришлите скриншот подтверждения.\n\n💳 Карта: {cardNumber}\n👤 Получатель: {cardHolder}\n\nОтправьте нужную сумму ({amount} сум), затем скиньте скриншот оплаты:",
   "topup.awaitScreenshot": "📸 Отправьте скриншот подтверждения перевода:",
   "topup.screenshotDone": "✅ Скриншот получен, платёж отправлен на проверку администратору. Баланс пополнится после подтверждения.",
   "topup.approved": "✅ Баланс пополнен на {amount} сум. Спасибо за покупку!",
   "topup.rejected": "❌ Платёж отклонён администратором, деньги не зачислены. Если вы переводили деньги — напишите в поддержку.",
-  "topup.linkReady": "Ссылка на оплату готова. После оплаты баланс пополнится автоматически — бот пришлёт уведомление.",
+  "topup.newPayment": "🧾 Новый платёж (карта)",
+  "topup.sum": "💳 Сумма: {amount}",
+  "topup.user": "👤 Пользователь: {user}",
+  "topup.time": "🕒 {time}",
+  "topup.approve": "✅ Одобрить",
+  "topup.reject": "❌ Отклонить",
 
   "menu.help": "❓ Помощь",
 
   "help.title": "❓ Как пользоваться ботом",
-  "help.text": "1️⃣ Пополнение баланса\nНажмите «💳 Пополнить баланс» → выберите способ оплаты (Payme / Click / Visa) → введите сумму → перейдите по ссылке и оплатите. Баланс зачислится автоматически.\n\n2️⃣ Услуги\n• 📺 Создать YouTube-канал — заполните заявку, админ свяжется с вами.\n• 🔗 Подключить монетизацию — отправьте ссылку на ваш канал.\n• 📚 Курс — обучение YouTube (199 000 сум) или курс + монетизация (300 000 сум).\n• 🚀 Накрутка — подписчики (обычные 35 000/1000 или дорогие 450 000/1000), просмотры (35 000/1000), лайки (49 000/1000).\n• ⭐ Stars — пакеты: 100 звёзд (33 000 сум), 200 (65 000), 300 (95 000).\n• 📱 Виртуальные номера — Америка 20 000, Индонезия 15 000, Малайзия 12 000, Филиппины 10 000, Кения 10 000.\n\n3️⃣ Проверка заявок\n«⚙️ Настройки» → «📋 Мои заявки».\n\n4️⃣ Баланс и история\n«⚙️ Настройки» → «💰 Мой баланс» / «🧾 История».\n\n5️⃣ Смена языка\n«⚙️ Настройки» → «🌐 Язык» → Русский или O'zbek.\n\n💬 Вопросы? Свяжитесь с поддержкой.",
+  "help.text": "1️⃣ Пополнение баланса\nНажмите «💳 Пополнить баланс» → введите сумму → переведите нужную сумму на карту и пришлите скриншот. После подтверждения администратором баланс пополнится.\n\n2️⃣ Услуги\n• 📺 Создать YouTube-канал — заполните заявку, админ свяжется с вами.\n• 🔗 Подключить монетизацию — отправьте ссылку на ваш канал.\n• 📚 Курс — обучение YouTube (199 000 сум) или курс + монетизация (300 000 сум).\n• 🚀 Накрутка — подписчики (обычные 35 000/1000 или дорогие 450 000/1000), просмотры (35 000/1000), лайки (49 000/1000).\n• ⭐ Stars — пакеты: 100 звёзд (33 000 сум), 200 (65 000), 300 (95 000).\n• 📱 Виртуальные номера — Америка 20 000, Индонезия 15 000, Малайзия 12 000, Филиппины 10 000, Кения 10 000.\n\n3️⃣ Проверка заявок\n«⚙️ Настройки» → «📋 Мои заявки».\n\n4️⃣ Баланс и история\n«⚙️ Настройки» → «💰 Мой баланс» / «🧾 История».\n\n5️⃣ Смена языка\n«⚙️ Настройки» → «🌐 Язык» → Русский или O'zbek.\n\n💬 Вопросы? Свяжитесь с поддержкой.",
 
   "admin.given": "💰 Вам начислено {amount} сум на баланс.",
 
@@ -178,9 +177,9 @@ const uz: Record<string, string> = {
 
   "start.welcome": "Xush kelibsiz! Amalni tanlang:",
   "start.brief":
-    "Bu yerda YouTube uchun xizmatlarni sotib olishingiz mumkin:\n📺 kanal • 🔗 monetizatsiya • 🚀 nakrutka • ⭐ Stars.\n\nBalansni to'ldiring (💳 karta, Payme, Click) va buyurtma bering.",
+    "Bu yerda YouTube uchun xizmatlarni sotib olishingiz mumkin:\n📺 kanal • 🔗 monetizatsiya • 🚀 nakrutka • ⭐ Stars.\n\nBuyurtma bering.",
   "start.tutorial":
-    "❓ Botdan qanday foydalaniladi\n\n1️⃣ Balansni to'ldirish\n«💳 Balansni to'ldirish» tugmasini bosing → summani kiriting → kartaga to'lang (summani o'tkazing va skrinshot yuboring) yoki Payme/Click orqali. Administrator tasdiqlagach balans to'ldiriladi.\n\n2️⃣ Xizmatlar\n• 📺 YouTube kanal ochish — ariza to'ldiring, admin siz bilan bog'lanadi.\n• 🔗 Monetizatsiya ulash — kanal havolasini yuboring.\n• 🚀 Nakrutka — obunachilar, tomoshalar, layklar.\n• ⭐ Stars xarid qilish — Telegram uchun yulduzlar.\n\n3️⃣ Arizalarni ko'rish\n«⚙️ Sozlamalar» → «📋 Mening arizalarim».\n\n4️⃣ Balans va tarix\n«⚙️ Sozlamalar» → «💰 Mening balansim» / «🧾 To'ldirishlar tarixi».\n\n5️⃣ Til almashtirish\n«⚙️ Sozlamalar» → «🌐 Til» → Ruscha yoki O'zbekcha.\n\n💬 Savollar? Qo'llab-quvvatlashga yozing.",
+    "❓ Botdan qanday foydalaniladi\n\n1️⃣ Balansni to'ldirish\n«💳 Balansni to'ldirish» tugmasini bosing → summani kiriting → kerakli summani kartaga o'tkazing va skrinshot yuboring. Administrator tasdiqlagach balans to'ldiriladi.\n\n2️⃣ Xizmatlar\n• 📺 YouTube kanal ochish — ariza to'ldiring, admin siz bilan bog'lanadi.\n• 🔗 Monetizatsiya ulash — kanal havolasini yuboring.\n• 🚀 Nakrutka — obunachilar, tomoshalar, layklar.\n• ⭐ Stars xarid qilish — Telegram uchun yulduzlar.\n\n3️⃣ Arizalarni ko'rish\n«⚙️ Sozlamalar» → «📋 Mening arizalarim».\n\n4️⃣ Balans va tarix\n«⚙️ Sozlamalar» → «💰 Mening balansim» / «🧾 To'ldirishlar tarixi».\n\n5️⃣ Til almashtirish\n«⚙️ Sozlamalar» → «🌐 Til» → Ruscha yoki O'zbekcha.\n\n💬 Savollar? Qo'llab-quvvatlashga yozing.",
 
   "lang.select": "Tilni tanlang / Выберите язык:",
   "lang.saved": "✅ Til saqlandi: O'zbekcha",
@@ -262,24 +261,23 @@ const uz: Record<string, string> = {
 
   "topup.amount": "To'ldirish summasini kiriting (kamida {min} so'm):",
   "topup.invalid": "Noto'g'ri summa. {min} so'mdan katta raqam kiriting:",
-  "topup.providerFirst": "To'lov usulini tanlang:",
-  "topup.provider": "Summa: {amount} so'm. To'lov usulini tanlang:",
-  "topup.unavailable": "💳 To'lov hozircha mavjud emas: administrator hali to'lov tizimini (Payme/Click) ulamagan. Keyinroq urinib ko'ring — administrator xabar olgan.",
-  "topup.payme": "Payme",
-  "topup.click": "Click",
-  "topup.visa": "Visa",
   "topup.card": "💳 Karta orqali to'lash",
   "topup.cardNotConfigured": "Karta orqali to'lash hozircha mavjud emas: administrator hali karta ma'lumotlarini qo'shmagan. Keyinroq urinib ko'ring.",
   "topup.cardDetails":
-    "{amount} so'mni kartaga o'tkazing va tasdiqlash skrinshotini yuboring.\n\n💳 Karta: {cardNumber}\n👤 Qabul qiluvchi: {cardHolder}\n🏦 Bank: {cardBank}\n\n⚠️ Aynan kerakli summani ({amount} so'm) o'tkazing — aynan u tekshiruvdan o'tadi.",
+    "{amount} so'mni shu kartaga o'tkazing va tasdiqlash skrinshotini yuboring.\n\n💳 Karta: {cardNumber}\n👤 Qabul qiluvchi: {cardHolder}\n\nKerakli summani ({amount} so'm) o'tkazing, so'ng to'lov skrinshotini yuboring:",
   "topup.awaitScreenshot": "📸 To'lov tasdiqlash skrinshotini yuboring:",
   "topup.screenshotDone": "✅ Skrinshot qabul qilindi, to'lov administratorga tekshiruvga yuborildi. Tasdiqlangach balans to'ldiriladi.",
   "topup.approved": "✅ Balansingiz {amount} so'mga to'ldirildi. Xaridingiz uchun rahmat!",
   "topup.rejected": "❌ To'lov administrator tomonidan rad etildi, pul hisobga tushmadi. Agar pul o'tkazgan bo'lsangiz, qo'llab-quvvatlashga yozing.",
-  "topup.linkReady": "To'lov havolasi tayyor. To'lovdan so'ng balans avtomatik to'ldiriladi — bot xabar beradi.",
+  "topup.newPayment": "🧾 Yangi to'lov (karta)",
+  "topup.sum": "💳 Summa: {amount}",
+  "topup.user": "👤 Foydalanuvchi: {user}",
+  "topup.time": "🕒 {time}",
+  "topup.approve": "✅ Tasdiqlash",
+  "topup.reject": "❌ Rad etish",
 
   "help.title": "❓ Botdan qanday foydalaniladi",
-  "help.text": "1️⃣ Balansni to'ldirish\n«💳 Balansni to'ldirish» tugmasini bosing → to'lov usulini tanlang (Payme / Click / Visa) → summani kiriting → havola orqali to'lang. Balans avtomatik to'ldiriladi.\n\n2️⃣ Xizmatlar\n• 📺 YouTube kanal ochish — ariza to'ldiring, admin siz bilan bog'lanadi.\n• 🔗 Monetizatsiya ulash — kanal havolasini yuboring.\n• 📚 Kurs — YouTube bo'yicha o'qish (199 000 so'm) yoki kurs + monetizatsiya (300 000 so'm).\n• 🚀 Nakrutka — obunachilar (oddiy 35 000/1000 yoki qimmat 450 000/1000), tomoshalar (35 000/1000), layklar (49 000/1000).\n• ⭐ Stars — paketlar: 100 yulduz (33 000 so'm), 200 (65 000), 300 (95 000).\n• 📱 Virtual raqamlar — Amerika 20 000, Indoneziya 15 000, Malayziya 12 000, Filippin 10 000, Keniya 10 000.\n\n3️⃣ Arizalarni ko'rish\n«⚙️ Sozlamalar» → «📋 Mening arizalarim».\n\n4️⃣ Balans va tarix\n«⚙️ Sozlamalar» → «💰 Mening balansim» / «🧾 To'ldirishlar tarixi».\n\n5️⃣ Til almashtirish\n«⚙️ Sozlamalar» → «🌐 Til» → Ruscha yoki O'zbekcha.\n\n💬 Savollar? Qo'llab-quvvatlashga murojaat qiling.",
+  "help.text": "1️⃣ Balansni to'ldirish\n«💳 Balansni to'ldirish» tugmasini bosing → summani kiriting → kerakli summani kartaga o'tkazing va skrinshot yuboring. Administrator tasdiqlagach balans to'ldiriladi.\n\n2️⃣ Xizmatlar\n• 📺 YouTube kanal ochish — ariza to'ldiring, admin siz bilan bog'lanadi.\n• 🔗 Monetizatsiya ulash — kanal havolasini yuboring.\n• 📚 Kurs — YouTube bo'yicha o'qish (199 000 so'm) yoki kurs + monetizatsiya (300 000 so'm).\n• 🚀 Nakrutka — obunachilar (oddiy 35 000/1000 yoki qimmat 450 000/1000), tomoshalar (35 000/1000), layklar (49 000/1000).\n• ⭐ Stars — paketlar: 100 yulduz (33 000 so'm), 200 (65 000), 300 (95 000).\n• 📱 Virtual raqamlar — Amerika 20 000, Indoneziya 15 000, Malayziya 12 000, Filippin 10 000, Keniya 10 000.\n\n3️⃣ Arizalarni ko'rish\n«⚙️ Sozlamalar» → «📋 Mening arizalarim».\n\n4️⃣ Balans va tarix\n«⚙️ Sozlamalar» → «💰 Mening balansim» / «🧾 To'ldirishlar tarixi».\n\n5️⃣ Til almashtirish\n«⚙️ Sozlamalar» → «🌐 Til» → Ruscha yoki O'zbekcha.\n\n💬 Savollar? Qo'llab-quvvatlashga murojaat qiling.",
 
   "admin.given": "💰 Sizning balansingizga {amount} so'm qo'shildi.",
 

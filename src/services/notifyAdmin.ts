@@ -1,9 +1,11 @@
-import { Bot, InlineKeyboard } from "grammy";
+import { Bot, InlineKeyboard, InputFile } from "grammy";
+import axios from "axios";
 import { prisma } from "../db/prisma.js";
 import { makeT, resolveLang } from "../i18n/index.js";
 
 const NOTIFY_BOT_TOKEN = process.env.NOTIFY_BOT_TOKEN ?? "";
 const NOTIFY_ADMIN_CHAT_ID = process.env.NOTIFY_ADMIN_CHAT_ID ?? "";
+const BUYER_BOT_TOKEN = process.env.BOT_TOKEN ?? "";
 
 let notifyBot: Bot | null = null;
 let buyerBot: Bot | null = null;
@@ -161,35 +163,6 @@ export async function startNotifyBot(): Promise<void> {
     await ctx.editMessageReplyMarkup({ reply_markup: undefined }).catch(() => undefined);
   });
 
-  notifyBot.callbackQuery(/^number_done:([^:]+):(.+)$/, async (ctx) => {
-    if (!(await isNotifyAdmin(ctx.from!.id))) return ctx.answerCallbackQuery({ text: "⚠️ Siz admin emassiz" });
-    const [, orderId, userId] = ctx.match!;
-    const order = await prisma.numberOrder.update({
-      where: { id: orderId },
-      data: { status: "done" },
-    }).catch(() => null);
-    if (!order) return ctx.answerCallbackQuery({ text: "⚠️ Ariza topilmadi" });
-    const lang = await resolveLang(BigInt(userId));
-    await notifyBuyer(BigInt(userId), makeT(lang)("notify.numbersApproved"));
-    await ctx.answerCallbackQuery({ text: "✅ Bajarildi" });
-    await ctx.editMessageReplyMarkup({ reply_markup: undefined }).catch(() => undefined);
-  });
-
-  notifyBot.callbackQuery(/^number_reject:([^:]+):(.+)$/, async (ctx) => {
-    if (!(await isNotifyAdmin(ctx.from!.id))) return ctx.answerCallbackQuery({ text: "⚠️ Siz admin emassiz" });
-    const [, orderId, userId] = ctx.match!;
-    const order = await prisma.numberOrder.update({
-      where: { id: orderId },
-      data: { status: "rejected" },
-    }).catch(() => null);
-    if (!order) return ctx.answerCallbackQuery({ text: "⚠️ Ariza topilmadi" });
-    await prisma.user.update({ where: { id: BigInt(userId) }, data: { balance: { increment: order.totalCost } } });
-    const lang = await resolveLang(BigInt(userId));
-    await notifyBuyer(BigInt(userId), makeT(lang)("notify.numbersRejected", { amount: Number(order.totalCost) }));
-    await ctx.answerCallbackQuery({ text: "❌ Rad etildi" });
-    await ctx.editMessageReplyMarkup({ reply_markup: undefined }).catch(() => undefined);
-  });
-
   notifyBot.catch((err: any) => console.error("notify bot error:", err.message ?? err));
   await notifyBot.init();
   notifyBot.start().catch((err: any) => console.error("notify bot start error:", err.message ?? err));
@@ -244,7 +217,19 @@ export async function notifyAdminPhoto(fileId: string, caption: string, markup?:
   }
   if (!chatId) return;
   try {
-    await notifyBot.api.sendPhoto(Number(chatId), fileId, { caption, reply_markup: markup });
+    const buyer = getBuyerBot();
+    if (buyer) {
+      // file_id нельзя использовать между разными ботами —
+      // качаем фото из основного бота и перезаливаем в админ-бот
+      const f = await buyer.api.getFile(fileId);
+      if (!f.file_path) throw new Error("file_path is empty");
+      const url = `https://api.telegram.org/file/bot${BUYER_BOT_TOKEN}/${f.file_path}`;
+      const res = await axios.get<ArrayBuffer>(url, { responseType: "arraybuffer" });
+      const photo = new InputFile(Buffer.from(res.data), "payment.jpg");
+      await notifyBot.api.sendPhoto(Number(chatId), photo, { caption, reply_markup: markup });
+    } else {
+      await notifyBot.api.sendPhoto(Number(chatId), fileId, { caption, reply_markup: markup });
+    }
   } catch (e: any) {
     console.error("notify photo error:", e?.message ?? e);
   }

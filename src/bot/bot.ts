@@ -9,12 +9,14 @@ import { starsBuyConversation } from "./conversations/starsBuy.js";
 import { registerAdminCommands } from "./admin.js";
 import { ensureUser } from "../services/settings.js";
 import { prisma } from "../db/prisma.js";
-import { makeT, resolveLang, type Lang } from "../i18n/index.js";
-
-type Handler = (ctx: MyContext) => unknown;
+import { makeT, resolveLang } from "../i18n/index.js";
 
 /** Регистрируем обработчик на кнопку меню в обеих языковых версиях */
-function hearMenu(bot: Bot<MyContext>, labelKey: string, handler: Handler) {
+function hearMenu(
+  bot: Bot<MyContext>,
+  labelKey: string,
+  handler: (ctx: MyContext) => unknown
+): void {
   bot.hears(makeT("ru")(labelKey), handler);
   bot.hears(makeT("uz")(labelKey), handler);
 }
@@ -48,17 +50,15 @@ export function createBot(): Bot<MyContext> {
   });
 
   bot.command("start", async (ctx) => {
+    // Приветствие одним текстом на обоих языках
+    const tUz = makeT("uz");
+    const tRu = makeT("ru");
+    const text = `${tUz("start.welcome")}\n\n${tUz("start.brief")}\n\n` +
+      `${tRu("start.welcome")}\n\n${tRu("start.brief")}`;
+    await ctx.reply(text);
+    // Меню — на выбранном языке пользователя
     const lang = await resolveLang(ctx.from?.id);
     const t = makeT(lang);
-    const tRu = makeT("ru");
-
-    // Краткое описание на языке пользователя
-    await ctx.reply(`${t("start.welcome")}\n\n${t("start.brief")}`);
-    // И то же краткое описание на русском
-    if (lang !== "ru") {
-      await ctx.reply(`${tRu("start.welcome")}\n\n${tRu("start.brief")}`);
-    }
-
     await ctx.reply(t("start.welcome"), { reply_markup: mainMenu(lang) });
   });
 
@@ -67,10 +67,14 @@ export function createBot(): Bot<MyContext> {
   hearMenu(bot, "menu.boost", (ctx) => ctx.conversation.enter("boostOrder"));
   hearMenu(bot, "menu.stars", (ctx) => ctx.conversation.enter("starsBuy"));
   hearMenu(bot, "menu.topup", (ctx) => ctx.conversation.enter("topup"));
-
   hearMenu(bot, "menu.settings", async (ctx) => {
     const lang = await resolveLang(ctx.from?.id);
     await ctx.reply(makeT(lang)("settings.title"), { reply_markup: settingsMenu(lang) });
+  });
+
+  bot.callbackQuery("settings:topup", async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await ctx.conversation.enter("topup");
   });
 
   bot.callbackQuery("settings:balance", async (ctx) => {
@@ -90,9 +94,7 @@ export function createBot(): Bot<MyContext> {
     ]);
     const lines = [
       ...orders.map((o: (typeof orders)[number]) => t("orders.line", { type: o.type, status: o.status, price: Number(o.price) })),
-      ...boosts.map(
-        (b: (typeof boosts)[number]) => t("orders.boostLine", { service: b.service, quantity: b.quantity, status: b.status, total: Number(b.totalCost) })
-      ),
+      ...boosts.map((b: (typeof boosts)[number]) => t("orders.boostLine", { service: b.service, quantity: b.quantity, status: b.status, total: Number(b.totalCost) })),
     ];
     await ctx.reply(lines.length ? lines.join("\n") : t("orders.empty"));
   });
@@ -106,6 +108,13 @@ export function createBot(): Bot<MyContext> {
     await ctx.reply(lines.length ? lines.join("\n") : t("history.empty"));
   });
 
+  bot.callbackQuery("settings:starrate", async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const t = makeT(await resolveLang(ctx.from!.id));
+    const setting = await prisma.settings.findUnique({ where: { key: "star_rate" } });
+    await ctx.reply(t("settings.starrate") + `: ${setting?.value ?? "180"}`);
+  });
+
   // Смена языка
   bot.callbackQuery("settings:lang", async (ctx) => {
     await ctx.answerCallbackQuery();
@@ -115,7 +124,7 @@ export function createBot(): Bot<MyContext> {
   });
 
   bot.callbackQuery(/^lang:(ru|uz)$/, async (ctx) => {
-    const lang = ctx.match![1] as Lang;
+    const lang = ctx.match![1] as "ru" | "uz";
     await ctx.answerCallbackQuery();
     await prisma.user.update({ where: { id: BigInt(ctx.from!.id) }, data: { lang } });
     const t = makeT(lang);

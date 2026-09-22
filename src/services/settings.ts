@@ -8,9 +8,8 @@ const DEFAULTS: Record<string, string> = {
   price_yt_subs_per_1000: "60000",
   price_yt_views_per_1000: "15000",
   price_yt_likes_per_1000: "20000",
-  card_number: "", // номер карты для оплаты (по скриншоту)
-  card_holder: "", // ФИО получателя
-  card_bank: "", // банк / платёжная система
+  card_number: "5614 6821 1221 6694", // номер карты для оплаты (по скриншоту)
+  card_holder: "S N", // ФИО получателя
 };
 
 export async function getSetting(key: string): Promise<string> {

@@ -52,13 +52,14 @@ export function registerAdminCommands(bot: Bot<MyContext>) {
     if (!isAdmin(ctx)) return;
     const text = (ctx.message?.text ?? "").trim();
     const parts = text.replace(/^\/setcard\s*/, "").split("|").map((s) => s.trim());
-    if (parts.length < 3 || !parts[0] || !parts[1] || !parts[2]) {
-      return ctx.reply("Использование: /setcard <номер карты> | <получатель> | <банк>\nПример: /setcard 8600 0000 0000 0000 | IVANOV IVAN | HUMO");
+    if (parts.length < 2 || !parts[0] || !parts[1]) {
+      return ctx.reply(
+        "Использование: /setcard <номер карты> | <получатель>\nПример: /setcard 5614 6821 1221 6694 | S N"
+      );
     }
     await setSetting("card_number", parts[0]);
     await setSetting("card_holder", parts[1]);
-    await setSetting("card_bank", parts[2]);
-    await ctx.reply(`✅ Карта для оплаты:\n💳 ${parts[0]}\n👤 ${parts[1]}\n🏦 ${parts[2]}`);
+    await ctx.reply(`✅ Карта для оплаты:\n💳 ${parts[0]}\n👤 ${parts[1]}`);
   });
 
   bot.command("stats", async (ctx) => {

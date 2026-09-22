@@ -21,7 +21,6 @@ function serviceLabel(lang: Lang, service: string): string {
 export async function boostOrderConversation(conversation: MyConversation, ctx: MyContext) {
   const lang = await conversation.external(() => resolveLang(ctx.from!.id));
   const t = makeT(lang);
-
   await ctx.reply(t("boost.title"), { reply_markup: boostServiceMenu(lang) });
 
   const choice = await conversation.waitForCallbackQuery(["boost:yt_subs", "boost:yt_views", "boost:yt_likes"]);
