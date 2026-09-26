@@ -2,6 +2,7 @@ import { Bot } from "grammy";
 import type { MyContext } from "./types.js";
 import { setSetting } from "../services/settings.js";
 import { prisma } from "../db/prisma.js";
+import { sendBackup, checkBalancesAfterRestart } from "../services/backup.js";
 
 const ADMIN_IDS = (process.env.ADMIN_IDS ?? "").split(",").map((s) => s.trim()).filter(Boolean);
 
@@ -72,6 +73,32 @@ export function registerAdminCommands(bot: Bot<MyContext>) {
     const ordersLine = orders.map((o: (typeof orders)[number]) => `${o.status}: ${o._count}`).join(", ") || "нет";
     await ctx.reply(
       `👥 Пользователей: ${usersCount}\n💰 Пополнено всего: ${successTx._sum.amount ?? 0} сум\n📋 Заявки: ${ordersLine}`
+    );
+  });
+
+  // Ручной дамп базы в админский чат
+  bot.command("backup", async (ctx) => {
+    if (!isAdmin(ctx)) return;
+    await ctx.reply("Готовлю дамп базы...");
+    const ok = await sendBackup(true);
+    await ctx.reply(ok ? "✅ Дамп отправлен в админский чат." : "❌ Не удалось отправить дамп.");
+  });
+
+  // Ручная проверка, не обнулились ли балансы
+  bot.command("checkbalance", async (ctx) => {
+    if (!isAdmin(ctx)) return;
+    const [agg, orders, tx] = await Promise.all([
+      prisma.user.aggregate({ _count: true, _sum: { balance: true } }),
+      prisma.serviceOrder.groupBy({ by: ["status"], _count: true }),
+      prisma.transaction.aggregate({ where: { status: "success" }, _sum: { amount: true } }),
+    ]);
+    await checkBalancesAfterRestart();
+    const ordersLine = orders.map((o: (typeof orders)[number]) => `${o.status}: ${o._count}`).join(", ") || "нет";
+    await ctx.reply(
+      `👤 Юзеров: ${agg._count}\n` +
+        `💰 Сумма всех балансов: ${agg._sum.balance ?? 0}\n` +
+        `✅ Пополнено всего: ${tx._sum.amount ?? 0}\n` +
+        `📋 Заявки: ${ordersLine}`
     );
   });
 

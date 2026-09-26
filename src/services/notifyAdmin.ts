@@ -194,27 +194,38 @@ export async function notifyBuyer(userId: number | bigint, text: string): Promis
 
 export async function notifyAdmin(text: string, markup?: any): Promise<void> {
   if (!notifyBot) return;
-  let chatId: string | null = NOTIFY_ADMIN_CHAT_ID || null;
-  if (!chatId) {
-    const row = await prisma.settings.findUnique({ where: { key: "notify_chat_id" } });
-    chatId = resolveNotifyChatId(row);
+  let chatId: number | null;
+  try {
+    chatId = await resolveAdminChatId();
+  } catch (e: any) {
+    // БД недоступна — самый вероятный повод для алерта, но и доставить его
+    // через БД не выйдет. В этом случае NOTIFY_ADMIN_CHAT_ID обязателен.
+    console.error("notify chat lookup failed:", e?.message ?? e);
+    return;
   }
   if (!chatId) return;
   try {
-    await notifyBot.api.sendMessage(Number(chatId), text, markup ? { reply_markup: markup } : {});
+    await notifyBot.api.sendMessage(chatId, text, markup ? { reply_markup: markup } : {});
   } catch (e: any) {
     console.error("notify send error:", e?.message ?? e);
   }
 }
 
+/** Чат админа: сначала env, иначе тот, кто нажал /start в боте-уведомителе */
+async function resolveAdminChatId(): Promise<number | null> {
+  if (NOTIFY_ADMIN_CHAT_ID) return Number(NOTIFY_ADMIN_CHAT_ID);
+  const row = await prisma.settings.findUnique({ where: { key: "notify_chat_id" } });
+  const chatId = resolveNotifyChatId(row);
+  return chatId ? Number(chatId) : null;
+}
+
 /** Отправить скриншот оплаты во второй (админский) бот */
 export async function notifyAdminPhoto(fileId: string, caption: string, markup?: any): Promise<void> {
   if (!notifyBot) return;
-  let chatId: string | null = NOTIFY_ADMIN_CHAT_ID || null;
-  if (!chatId) {
-    const row = await prisma.settings.findUnique({ where: { key: "notify_chat_id" } });
-    chatId = resolveNotifyChatId(row);
-  }
+  const chatId = await resolveAdminChatId().catch((e: any) => {
+    console.error("notify chat lookup failed:", e?.message ?? e);
+    return null;
+  });
   if (!chatId) return;
   try {
     const buyer = getBuyerBot();
@@ -226,11 +237,37 @@ export async function notifyAdminPhoto(fileId: string, caption: string, markup?:
       const url = `https://api.telegram.org/file/bot${BUYER_BOT_TOKEN}/${f.file_path}`;
       const res = await axios.get<ArrayBuffer>(url, { responseType: "arraybuffer" });
       const photo = new InputFile(Buffer.from(res.data), "payment.jpg");
-      await notifyBot.api.sendPhoto(Number(chatId), photo, { caption, reply_markup: markup });
+      await notifyBot.api.sendPhoto(chatId, photo, { caption, reply_markup: markup });
     } else {
-      await notifyBot.api.sendPhoto(Number(chatId), fileId, { caption, reply_markup: markup });
+      await notifyBot.api.sendPhoto(chatId, fileId, { caption, reply_markup: markup });
     }
   } catch (e: any) {
     console.error("notify photo error:", e?.message ?? e);
+  }
+}
+
+/**
+ * Отправить файл в админский чат. Используется бэкапами базы: диск Render
+ * эфемерный, наружу файл не положить, а Telegram остаётся единственным
+ * бесплатным надёжным хранилищем дампа.
+ */
+export async function notifyAdminDocument(
+  buffer: Buffer,
+  filename: string,
+  caption: string
+): Promise<boolean> {
+  if (!notifyBot) return false;
+  const chatId = await resolveAdminChatId().catch((e: any) => {
+    console.error("notify chat lookup failed:", e?.message ?? e);
+    return null;
+  });
+  if (!chatId) return false;
+  try {
+    const doc = new InputFile(buffer, filename);
+    await notifyBot.api.sendDocument(chatId, doc, { caption });
+    return true;
+  } catch (e: any) {
+    console.error("notify document error:", e?.message ?? e);
+    return false;
   }
 }

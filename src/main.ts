@@ -3,6 +3,7 @@ import express from "express";
 import { createBot } from "./bot/bot.js";
 import { registerBotForNotify } from "./server/notify.js";
 import { startNotifyBot, setBuyerBot } from "./services/notifyAdmin.js";
+import { startBackupScheduler } from "./services/backup.js";
 
 async function main() {
   const bot = createBot();
@@ -10,6 +11,8 @@ async function main() {
   setBuyerBot(bot);
   // Второй (админский) бот для подтверждения оплат и заявок
   await startNotifyBot();
+  // Дампы базы в админский чат + сторож обнуления балансов
+  startBackupScheduler();
 
   const app = express();
   app.use(express.json());

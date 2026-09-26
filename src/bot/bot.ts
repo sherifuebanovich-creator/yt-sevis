@@ -10,6 +10,31 @@ import { registerAdminCommands } from "./admin.js";
 import { ensureUser } from "../services/settings.js";
 import { prisma } from "../db/prisma.js";
 import { makeT, resolveLang } from "../i18n/index.js";
+import { notifyAdmin } from "../services/notifyAdmin.js";
+
+/**
+ * Без bot.catch grammY по умолчанию ОСТАНАВЛИВАЕТ polling при первой ошибке
+ * в middleware (см. node_modules/grammy/out/bot.js: дефолтный errorHandler
+ * вызывает this.stop() и пробрасывает исключение). Любая недоступность БД
+ * приводила бы к process.exit(1) и бесконечному циклу аварий на Render.
+ * Со своим обработчиком бот переживает обрыв и оживает, когда БД вернётся.
+ */
+let lastAlertAt = 0;
+const ALERT_COOLDOWN_MS = 10 * 60 * 1000;
+
+function registerErrorHandler(bot: Bot<MyContext>): void {
+  bot.catch((err) => {
+    const e = err.error as Error | undefined;
+    const message = e?.message ?? String(e);
+    console.error("bot error:", message);
+
+    // Не шумим в админский чат на каждом апдейте: при лежащей БД их будет
+    // ровно столько, сколько сообщений пришло
+    if (Date.now() - lastAlertAt < ALERT_COOLDOWN_MS) return;
+    lastAlertAt = Date.now();
+    void notifyAdmin(`🚨 Ошибка бота: ${message}`).catch(() => {});
+  });
+}
 
 /** Регистрируем обработчик на кнопку меню в обеих языковых версиях */
 function hearMenu(
@@ -133,6 +158,7 @@ export function createBot(): Bot<MyContext> {
   });
 
   registerAdminCommands(bot);
+  registerErrorHandler(bot);
 
   return bot;
 }
