@@ -30,6 +30,10 @@ async function main() {
 
   // Не await: startPolling сам переживает 409 и держит retry в фоне
   startPolling(bot, "Основной бот", true);
+
+  // Пульс процесса: по логам видно, что бот жив, без обращения к Telegram.
+  // Свежие строки alive = процесс работает и polling не завис.
+  setInterval(() => console.log(`alive ${new Date().toISOString()}`), 5 * 60 * 1000).unref?.();
 }
 
 main().catch((err) => {

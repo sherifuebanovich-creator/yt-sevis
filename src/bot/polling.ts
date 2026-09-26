@@ -16,9 +16,13 @@ import type { Bot } from "grammy";
 export function startPolling(bot: Bot<any>, name: string, fatal = false): void {
   void (async () => {
     for (let attempt = 1; ; attempt++) {
+      // bot.start() не резолвится, пока polling жив — он возвращает управление
+      // только при остановке. Поэтому «запущен» пишем ДО await, иначе строка
+      // никогда не появится и в логах будет пустота при живом боте.
+      console.log(`${name}: запускаю long polling (попытка ${attempt})`);
       try {
         await bot.start();
-        console.log(`${name} запущен (long polling)`);
+        console.log(`${name}: long polling остановлен`);
         return;
       } catch (err: any) {
         const message = err?.message ?? String(err);
