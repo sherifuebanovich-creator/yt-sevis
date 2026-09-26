@@ -1,6 +1,7 @@
 import { Bot, InlineKeyboard, InputFile } from "grammy";
 import axios from "axios";
 import { prisma } from "../db/prisma.js";
+import { isAdminId } from "./admins.js";
 import { makeT, resolveLang } from "../i18n/index.js";
 import { startPolling } from "../bot/polling.js";
 
@@ -35,12 +36,9 @@ export function orderInfoText(opts: {
   return lines.join("\n");
 }
 
-/** Админ (тот, кто нажал /start в боте-уведомителе) */
+/** Админ (тот, кто нажал /start в боте-уведомителе, или из ADMIN_IDS) */
 async function isNotifyAdmin(userId: number): Promise<boolean> {
-  const row = await prisma.settings.findUnique({ where: { key: "admin_ids" } });
-  const ids = new Set((row?.value ?? "").split(",").map((s) => s.trim()).filter(Boolean));
-  ids.add(NOTIFY_ADMIN_CHAT_ID);
-  return ids.has(String(userId));
+  return isAdminId(userId);
 }
 
 function resolveNotifyChatId(row: { value?: string | null } | null): string | null {

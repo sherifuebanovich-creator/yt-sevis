@@ -3,11 +3,16 @@ import type { MyContext } from "./types.js";
 import { setSetting } from "../services/settings.js";
 import { prisma } from "../db/prisma.js";
 import { sendBackup, checkBalancesAfterRestart } from "../services/backup.js";
+import { isAdminId, getAdminIds, addAdminId, removeAdminId, isLockedAdmin } from "../services/admins.js";
 
-const ADMIN_IDS = (process.env.ADMIN_IDS ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+async function isAdmin(ctx: MyContext): Promise<boolean> {
+  return isAdminId(ctx.from?.id);
+}
 
-function isAdmin(ctx: MyContext): boolean {
-  return !!ctx.from && ADMIN_IDS.includes(String(ctx.from.id));
+/** ID человека, на сообщение которого ответили этой командой */
+function repliedUserId(ctx: MyContext): number | undefined {
+  const msg = ctx.msg as { reply_to_message?: { from?: { id?: number } } } | undefined;
+  return msg?.reply_to_message?.from?.id;
 }
 
 const PRICE_KEYS: Record<string, string> = {
@@ -20,7 +25,7 @@ const PRICE_KEYS: Record<string, string> = {
 
 export function registerAdminCommands(bot: Bot<MyContext>) {
   bot.command("setprice", async (ctx) => {
-    if (!isAdmin(ctx)) return;
+    if (!(await isAdmin(ctx))) return;
     const [, key, value] = (ctx.message?.text ?? "").split(" ");
     const settingKey = PRICE_KEYS[key];
     if (!settingKey || !value || Number.isNaN(Number(value))) {
@@ -33,7 +38,7 @@ export function registerAdminCommands(bot: Bot<MyContext>) {
   });
 
   bot.command("setstarrate", async (ctx) => {
-    if (!isAdmin(ctx)) return;
+    if (!(await isAdmin(ctx))) return;
     const [, value] = (ctx.message?.text ?? "").split(" ");
     if (!value || Number.isNaN(Number(value))) return ctx.reply("Использование: /setstarrate <сумма_за_звезду>");
     await setSetting("star_rate", value);
@@ -41,7 +46,7 @@ export function registerAdminCommands(bot: Bot<MyContext>) {
   });
 
   bot.command("settopupmin", async (ctx) => {
-    if (!isAdmin(ctx)) return;
+    if (!(await isAdmin(ctx))) return;
     const [, value] = (ctx.message?.text ?? "").split(" ");
     if (!value || Number.isNaN(Number(value))) return ctx.reply("Использование: /settopupmin <сумма>");
     await setSetting("min_topup", value);
@@ -50,7 +55,7 @@ export function registerAdminCommands(bot: Bot<MyContext>) {
 
   // Реквизиты карты для оплаты по скриншоту
   bot.command("setcard", async (ctx) => {
-    if (!isAdmin(ctx)) return;
+    if (!(await isAdmin(ctx))) return;
     const text = (ctx.message?.text ?? "").trim();
     const parts = text.replace(/^\/setcard\s*/, "").split("|").map((s) => s.trim());
     if (parts.length < 2 || !parts[0] || !parts[1]) {
@@ -64,7 +69,7 @@ export function registerAdminCommands(bot: Bot<MyContext>) {
   });
 
   bot.command("stats", async (ctx) => {
-    if (!isAdmin(ctx)) return;
+    if (!(await isAdmin(ctx))) return;
     const [usersCount, successTx, orders] = await Promise.all([
       prisma.user.count(),
       prisma.transaction.aggregate({ where: { status: "success" }, _sum: { amount: true } }),
@@ -78,7 +83,7 @@ export function registerAdminCommands(bot: Bot<MyContext>) {
 
   // Ручной дамп базы в админский чат
   bot.command("backup", async (ctx) => {
-    if (!isAdmin(ctx)) return;
+    if (!(await isAdmin(ctx))) return;
     await ctx.reply("Готовлю дамп базы...");
     const ok = await sendBackup(true);
     await ctx.reply(ok ? "✅ Дамп отправлен в админский чат." : "❌ Не удалось отправить дамп.");
@@ -86,7 +91,7 @@ export function registerAdminCommands(bot: Bot<MyContext>) {
 
   // Ручная проверка, не обнулились ли балансы
   bot.command("checkbalance", async (ctx) => {
-    if (!isAdmin(ctx)) return;
+    if (!(await isAdmin(ctx))) return;
     const [agg, orders, tx] = await Promise.all([
       prisma.user.aggregate({ _count: true, _sum: { balance: true } }),
       prisma.serviceOrder.groupBy({ by: ["status"], _count: true }),
@@ -102,9 +107,55 @@ export function registerAdminCommands(bot: Bot<MyContext>) {
     );
   });
 
+  // ─── Управление админами ───────────────────────────────────────────────
+  // Права админа = полный доступ к деньгам: /backup отдаёт все балансы,
+  // /setcard меняет реквизиты, /checkbalance показывает суммы. Добавляй
+  // только тех, кому доверяешь на 100%.
+
+  bot.command("admins", async (ctx) => {
+    if (!(await isAdmin(ctx))) return;
+    const ids = [...(await getAdminIds())].sort();
+    await ctx.reply(
+      `👑 Админов: ${ids.length}\n\n${ids.map((i) => `• ${i}${isLockedAdmin(i) ? " (зашит в env, не удалить)" : ""}`).join("\n")}`
+    );
+  });
+
+  bot.command("addadmin", async (ctx) => {
+    if (!(await isAdmin(ctx))) return;
+    // Либо ответ на сообщение человека, либо явный ID
+    const target =
+      repliedUserId(ctx) ??
+      Number((ctx.message?.text ?? "").split(" ")[1]?.trim());
+    if (!Number.isFinite(target) || !target) {
+      return ctx.reply("Использование: /addadmin <telegram_id>\nИли ответь на сообщение человека этой командой.");
+    }
+    const before = await getAdminIds();
+    if (before.has(String(target))) return ctx.reply(`ℹ️ ${target} уже админ.`);
+    await addAdminId(String(target));
+    const name = (ctx.msg as any)?.reply_to_message?.from?.first_name ?? "";
+    await ctx.reply(`✅ ${target}${name ? ` (${name})` : ""} добавлен как админ.\nВсего админов: ${before.size + 1}`);
+  });
+
+  bot.command("deladmin", async (ctx) => {
+    if (!(await isAdmin(ctx))) return;
+    const target = String(
+      repliedUserId(ctx) ?? Number((ctx.message?.text ?? "").split(" ")[1]?.trim())
+    );
+    if (!/^\d+$/.test(target)) return ctx.reply("Использование: /deladmin <telegram_id>");
+    if (isLockedAdmin(target)) {
+      return ctx.reply(`🔒 ${target} зашит в переменную ADMIN_IDS на сервере. Убрать оттуда можно только через Render Dashboard.`);
+    }
+    const before = await getAdminIds();
+    if (!before.has(target)) return ctx.reply(`ℹ️ ${target} не в списке админов.`);
+    // Последнего админа удалять нельзя — иначе прав на бот больше ни у кого не останется
+    if (before.size <= 1) return ctx.reply("🚫 Это последний админ. Удаление запрещено, иначе бот останется без управления.");
+    await removeAdminId(target);
+    await ctx.reply(`✅ ${target} удалён из админов. Осталось: ${before.size - 1}`);
+  });
+
   // Обработка заявок из админ-уведомлений (кнопки под сообщением, см. main.ts)
   bot.callbackQuery(/^order:(in_progress|done|rejected):(.+)$/, async (ctx) => {
-    if (!isAdmin(ctx)) return ctx.answerCallbackQuery();
+    if (!(await isAdmin(ctx))) return ctx.answerCallbackQuery();
     const [, status, orderId] = ctx.match!;
     const order = await prisma.serviceOrder.update({ where: { id: orderId }, data: { status } });
 
