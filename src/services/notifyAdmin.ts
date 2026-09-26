@@ -2,6 +2,7 @@ import { Bot, InlineKeyboard, InputFile } from "grammy";
 import axios from "axios";
 import { prisma } from "../db/prisma.js";
 import { makeT, resolveLang } from "../i18n/index.js";
+import { startPolling } from "../bot/polling.js";
 
 const NOTIFY_BOT_TOKEN = process.env.NOTIFY_BOT_TOKEN ?? "";
 const NOTIFY_ADMIN_CHAT_ID = process.env.NOTIFY_ADMIN_CHAT_ID ?? "";
@@ -165,8 +166,9 @@ export async function startNotifyBot(): Promise<void> {
 
   notifyBot.catch((err: any) => console.error("notify bot error:", err.message ?? err));
   await notifyBot.init();
-  notifyBot.start().catch((err: any) => console.error("notify bot start error:", err.message ?? err));
-  console.log("Notify-бот запущен (long polling)");
+  // 409 на деплое — штатная гонка со старым инстансом, startPolling переживает её
+  startPolling(notifyBot, "Notify-бот");
+  console.log("Notify-бот инициализирован");
 }
 
 export function getNotifyBot(): Bot | null {

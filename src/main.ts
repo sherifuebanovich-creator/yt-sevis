@@ -4,15 +4,19 @@ import { createBot } from "./bot/bot.js";
 import { registerBotForNotify } from "./server/notify.js";
 import { startNotifyBot, setBuyerBot } from "./services/notifyAdmin.js";
 import { startBackupScheduler } from "./services/backup.js";
+import { startPolling } from "./bot/polling.js";
 
 async function main() {
   const bot = createBot();
   registerBotForNotify(bot);
   setBuyerBot(bot);
+
+  // Дампы базы + сторож обнуления балансов. Стартует до ботов, чтобы
+  // работать даже если polling временно не поднялся (например 409 на деплое)
+  startBackupScheduler();
+
   // Второй (админский) бот для подтверждения оплат и заявок
   await startNotifyBot();
-  // Дампы базы в админский чат + сторож обнуления балансов
-  startBackupScheduler();
 
   const app = express();
   app.use(express.json());
@@ -24,8 +28,8 @@ async function main() {
   const port = Number(process.env.PORT ?? process.env.SERVER_PORT ?? 3000);
   app.listen(port, () => console.log(`HTTP-сервер запущен на порту ${port}`));
 
-  await bot.start();
-  console.log("Бот запущен (long polling)");
+  // Не await: startPolling сам переживает 409 и держит retry в фоне
+  startPolling(bot, "Основной бот", true);
 }
 
 main().catch((err) => {
